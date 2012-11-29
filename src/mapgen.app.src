@@ -1,0 +1,15 @@
+{application, mapgen,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {modules, [
+	mapgen_server
+	]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { mapgen_app, []}},
+  {env, []}
+ ]}.

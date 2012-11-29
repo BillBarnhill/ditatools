@@ -1,0 +1,45 @@
+Introduction
+	Terminology
+	Normative References
+	Non-Normative References
+	Namespaces
+	Overview (Non-normative)
+Components of ADI (Non-normative)
+	ADI Architectural Style Overview
+	ADI Protocol Overview
+	ADI Model Overview
+	ADI Supporting Infrastructure
+Design
+	Drivers 
+	Design Requirements
+	Design Choice Criteria
+Architectural Style
+	Deriving Style from REST, ARRESTED
+	Constraints from Roy Fielding's REST
+	Constraints from Rohit Khare's ARRESTED
+	Additional Constraints
+		Additional constraints on XRIs
+			Triples
+ADI Protocol
+	JSON Format
+	Message Types (verbs, etc)
+Graph Model
+	Basic Concepts
+		Starting with XRI
+	Support of First Order Logic
+	Support of Zermelo-Frankel Set Theory
+Comparison with Other Protocols
+	XDI
+	Webfinger
+	Pubsubhubbub
+	OpenStatus
+	ActivityStreams
+Implementing Messaging Design Patterns
+	Scatter Gather, etc
+Conformance with SWAT0
+	Overview of SWAT0
+	Peers
+	Event Types
+	Triggers
+	SWAT0 Timeline with Events and activated Triggers
+	SWAT0 message flow
