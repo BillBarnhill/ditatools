@@ -60,22 +60,20 @@ init([Device]) ->
 handle_call(Msg, State) ->
     handle_unexpected("handle_call", Msg, State).
 
-handle_cast({stream, Text},State) ->
-    handle_text(Text, State);
-
 handle_cast({stream, Format, Args}, State) ->
     handle_formatting(Format, Args, State);
-
 handle_cast({stream, nl}, State) ->
     handle_newline(State);
-
 handle_cast({stream, eos}, State) ->
-    handle_eos(State).
+    handle_eos(State);
+handle_cast({stream, Text},State) ->
+    handle_text(Text, State).
+
 
 handle_info(Msg, State) ->
     handle_unexpected("handle_info", Msg, State).
 
-terminate(normal, State) ->
+terminate(normal, _State) ->
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -101,7 +99,7 @@ handle_newline(State=#printstream_state{device=Device}) ->
     {noreply, State}.
 
 %% Signal end of stream
-handle_eos(State=#printstream_state{device=Device}) ->
+handle_eos(State) ->
     {noreply, State}.
 
 %% Handle anything else

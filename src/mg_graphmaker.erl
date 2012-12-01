@@ -1,6 +1,6 @@
 -module(mg_graphmaker).
 
--export([process_file/1, print/1, ditamap/2, printing_stream/0]).
+-export([process_file/1, print/1, ditamap/2]).
 
 
 -record(entry, {indent, position, title}).
@@ -29,43 +29,52 @@ process_line(Src, {ok, Line}, Acc0) ->
 
 %% Start of outline specific processing
 %% Returns {Graph, Current}
-process_outline_line(Graph0, Current0, Line) ->
+process_outline_line(Graph, Current, Line) ->
 	Indent = count_indent(Line),
 	Title = parse_title(Line),
-	LastIndent = last_indent(Graph0,Current0),
-	{Type, Steps} = if
-			LastIndent == -1 -> {first, undefined};
-			LastIndent > Indent -> {up, LastIndent - Indent};
-			LastIndent < Indent -> {down, 1};
-			LastIndent == Indent -> {sibling, 0}
-		end,
-	handle_type(Type, Steps, Graph0, Current0, Indent, Title). 
+	LastIndent = last_indent(Graph,Current),
+    Steps = calc_steps(LastIndent, Indent),
+    Type = find_type(LastIndent, Indent),
+    Parent = find_parent(Type, Steps, Graph, Current),
+    Position = find_position(Type, Graph, Parent),
+	NextCurrent = add_child(Graph, Parent, Indent, Position, Title),
+	{Graph, NextCurrent}.
 
-handle_type(first, _, Graph, Current0, Indent, Title) ->
-	Parent = Current0, % Current is initially the virtual root
-	Position = 1,
-	Current = add_child(Graph, Parent, Indent, Position, Title),
-	{Graph, Current};	
 
-handle_type(up, Steps, Graph, Current0, Indent, Title) ->
-	Parent = get_ancestor(Steps+1, Graph, Current0),
-	Position = digraph:out_degree(Graph, Parent)+1,
-	Current = add_child(Graph, Parent, Indent, Position, Title),
-	{Graph, Current};
- 	
+calc_steps(LastIndent, _Indent) when LastIndent == -1 ->
+    undefined;
+calc_steps(LastIndent, Indent) when LastIndent > Indent ->
+    LastIndent - Indent;
+calc_steps(LastIndent, Indent) when LastIndent < Indent ->
+    1;
+calc_steps(LastIndent, Indent) when LastIndent == Indent ->
+    0.
 
-handle_type(down, _, Graph, Current0, Indent, Title) ->
-	Parent = Current0,
-	Position = 1,
-	Current = add_child(Graph, Parent, Indent, Position, Title),
-	{Graph, Current};
 
-handle_type(sibling, _, Graph, Current0, Indent, Title) ->
-	Parent = get_parent(Graph,Current0),
-	Position = digraph:out_degree(Graph, Parent)+1,
-	Current = add_child(Graph, Parent, Indent, Position, Title),
-	{Graph, Current}.
+find_type(LastIndent, _Indent) when LastIndent == -1 ->
+    first;
+find_type(LastIndent, Indent) when LastIndent > Indent ->
+    up;
+find_type(LastIndent, Indent) when LastIndent < Indent ->
+    down;
+find_type(LastIndent, Indent) when LastIndent == Indent ->
+    sibling.
 
+
+find_parent(Type, _Steps, _Graph, Current) when (Type == first) or (Type == down) ->
+    Current;
+find_parent(up, Steps, Graph, Current) ->
+    get_ancestor(Steps+1, Graph, Current);
+find_parent(sibling, _Steps, Graph, Current) ->
+    get_parent(Graph, Current).
+
+
+find_position(Type, _Graph, _Parent) when (Type == first) or (Type == down) ->
+    1;
+find_position(up, Graph, Parent) ->
+	digraph:out_degree(Graph, Parent)+1;
+find_position(sibling, Graph, Parent) ->
+	digraph:out_degree(Graph, Parent)+1.
 
 add_child(Graph, Parent, Indent, Position, Title ) ->
 	V = digraph:add_vertex(Graph),
@@ -77,10 +86,8 @@ add_child(Graph, Parent, Indent, Position, Title ) ->
 
 get_ancestor(0, _, Current) ->
 	Current;
-		
 get_ancestor(N, Graph, Current) ->
 	get_ancestor(N-1, Graph, get_parent(Graph,Current)).
-
 get_parent(Graph, Current) ->
 	[Parent] = digraph:in_neighbours(Graph, Current),
 	Parent.
@@ -98,10 +105,8 @@ parse_title(Line) ->
 
 count_indent(Line) ->
 	count_indent(Line, 0).
-
 count_indent([$\t | Line], Count) ->
 	count_indent(Line, Count+1);
-
 count_indent(_, Count) ->
 	Count.
 
